@@ -1,0 +1,797 @@
+namespace = COR
+
+# The Roman Republic had success and reformed the Western Roman Empire / Roman Empire
+# now we are requesting to the Pope to join the Empire.
+character_event = {
+	id = COR.0
+	desc = "COR.0.desc"
+    	picture = GFX_evt_emissary
+		border = GFX_event_normal_frame_diplomacy
+    
+    	is_triggered_only = yes
+    
+	# The Pope accepts the demand
+    	option = {
+        	name = EVTOPTA_COR_0
+
+			ai_chance = { 
+				factor = 50
+				# An ambitious Pope would not accept peaceful vassalization!		
+				modifier = {
+					factor = 0
+					trait = ambitious
+				}
+				# TODO Check if it brokes all again
+				modifier = {
+					factor = 0
+					NOT = {
+						opinion = { who = FROM value = 0 }
+					}
+				}
+				modifier = {
+					factor = 0.1
+				 # if opinion is between 0 and 25 he could start to think to accept
+					NOT = {
+						opinion = { who = FROM value = 25 }
+					}
+				}
+				modifier = {
+					factor = 0.50 
+                                 # if opinion is between 25 and a 50 he should have a 25% of chance to accept
+				 # Remember it is multiplied in any case for the next weights!
+					NOT = {
+						opinion = { who = FROM value = 50 }
+						}
+				}
+				modifier = {
+					factor = 0.50
+                                # if opinion is between 50 and 75 he should
+                                # have a 50% of chance to accept (that is he accepts for sure)
+					NOT = {
+						opinion = { who = FROM value = 75 }
+					}
+				}
+				modifier = {
+					factor = 1
+                                # if opinion is more than 75 he should have 100% chance to accept
+					opinion = { who = FROM value = 75 }
+				}
+			}
+
+		b_roma = {
+			grant_title = PREV
+		}
+		opinion = {
+			who = FROM
+			modifier = opinion_restored_to_rome
+		}
+
+		# Things to do:
+		# - the Pope should become a Senator of Rome (only passive
+		#   vote should never elected as the ruler!)
+		# - the Pope should become Chaplain and should not never removed (a sort penalty?)
+		# - the Pope should not get the recurring claim on the County Rome
+
+		# In exchange of the Bishorship of Rome
+		# the Pope become a vassal of the callee
+		set_defacto_liege = FROM
+		set_global_flag = lateran_teatry_accepted
+		# Inform the new Liege that the Pope is now ready to serve
+		FROM = { character_event = { id = COR.1 } } 
+    	}
+
+	# The Pope does NOT accept the demand
+    	option = {
+       		name = EVTOPTB_COR_0
+                
+	   	ai_chance = { 
+  			factor = 50
+			# A content Pope is more incline to accept peaceful vassalization
+			modifier = {
+				factor = 0.25
+				trait = content
+			}
+
+			modifier = {
+				factor = 0
+				# if opinion is > 75 he is forced to accept
+			 	opinion = { who = FROM value = 75 }	
+			}
+
+		 }
+
+		 FROM = {
+			opinion = {
+				modifier = opinion_disappointed
+				who = ROOT
+				months = 120
+			}
+			character_event = { id = COR.2 } 
+		}
+	}
+}
+
+# Inform the new liege that the Pope is joining us
+character_event = {
+	id = COR.1
+	desc = "COR.1.desc"
+    	picture = GFX_evt_emissary
+	border = GFX_event_normal_frame_diplomacy
+ 
+	is_triggered_only = yes
+
+	option = {
+        	name = EVTOPTOK_COR_1
+			any_playable_ruler = {
+			limit = {
+				#NOT = { has_landed_title = e_byzantium }
+				ai = no
+			}
+			narrative_event = { id = COR.3}
+		}	
+	}
+}
+
+# Inform the callee that the Pope refused to join us
+character_event = {
+	id = COR.2
+	desc = "COR.2.desc"
+   	picture = GFX_evt_emissary
+	border = GFX_event_normal_frame_diplomacy
+ 
+	is_triggered_only = yes
+
+	option = {
+        name = EVTOPTOK_COR_2
+		# So we could retry again
+		# "PREV" should be the one that has called the event "FROM"
+		# is the Pope!
+		PREV = {
+			clr_character_flag = discussing_lateran_treaty
+		}
+		prestige = -500
+
+		# You could retry in five years
+		custom_tooltip = {
+			text = lateran_treaty_cooldown_ctt 
+			hidden_tooltip = {
+				add_character_modifier = {
+					name = lateran_treaty_cooldown
+					duration = 365
+					#duration = 1825
+					inherit = yes
+				}
+			}
+		}
+	}
+}
+
+# Inform the rest of the world that the Pope is now part of The Roman Republic / Empire
+narrative_event = {
+	id = COR.3
+	title = COR.3.title 
+	desc = COR.3.desc
+    	picture = GFX_evt_emissary
+	border = GFX_event_normal_frame_diplomacy
+ 
+	is_triggered_only = yes
+
+	option = {
+        	name = EVTOPTA_COR_3
+		trigger = {
+			NOT = { has_landed_title = e_hre }
+		}
+	}
+
+	# Sorry HRE Emperor but you are an anacronism now...
+	# (It is implicit that because the Pope has accepted vassalazition
+        #  he is recognizing now the Roman Republic as the real successor of
+        #  Rome)
+	option = {
+        name = EVTOPTB_COR_3
+		trigger = {
+			has_landed_title = e_hre
+		}
+		prestige = -500
+		# Let's see if we find a way to use this later...
+		set_global_flag = hre_is_anacronism
+		# It could make sense to add a character modifier? It could
+		# have sense his vassals (and the world?) starts to see him as
+                # an usurper
+	}
+}
+
+# The Pope has lost his claim on Rome, but it is God's will that he rules Rome! (Really? :-) )
+character_event = {
+	id = COR.4
+	title = COR.4.title
+    	desc = COR.4.desc
+    	picture = GFX_evt_rome_restored_byzantine
+
+	trigger = {
+		has_dlc = "Legacy of Rome"
+		has_landed_title = k_papal_state
+		NOT = { has_landed_title = c_roma }
+		NOT = { has_claim = c_roma }
+		# If he accepted the treaty he should not get the claim anymore
+		NOT = { has_global_flag = lateran_teatry_accepted }
+		# TODO It has sense to check that we are in our scenary? Well could have always sense
+		# that the Pope tries to reclaim Rome
+	}
+
+	mean_time_to_happen = {
+		days = 1
+	}
+
+	option = {
+		name = EVTOPTA_COR_4
+		add_claim = c_roma
+		# TODO add a reverse event to make known that the Pope has again its claim on Rome 
+		any_playable_ruler = {
+			limit = {
+				OR = {
+				 has_landed_title = d_commune_of_rome 
+				 has_landed_title = k_roman_republic
+				 has_landed_title = e_wre
+				}
+			}
+			narrative_event = { id = COR.5}
+		}
+
+	}
+}
+
+narrative_event = {
+	id = COR.5
+	title = COR.5.title 
+	desc = COR.5.desc
+   	picture = GFX_evt_emissary
+	#border = GFX_event_normal_frame_diplomacy
+ 
+	is_triggered_only = yes
+
+	option = {
+        name = EVTOPTA_COR_5
+		ROOT = {
+			opinion = {
+				modifier = opinion_disappointed
+				who = FROM
+				months = 120
+			}
+		}
+	}
+
+}
+
+# Now the Pope could call for help a Christian King (a Crusader King?) but only one of them!
+# Historically this one was the Holy Roman Emperor but it cannot be in "The Commune of Rome" scenario
+character_event = {
+	id = COR.6
+	title = COR.6.title
+    	desc = COR.6.desc
+   	picture = GFX_evt_emissary
+
+	trigger = {
+		has_dlc = "Legacy of Rome"
+		#has_landed_title = k_papal_state
+		has_landed_title = k_pisa
+		NOT = { has_global_flag = defender_of_the_faith_exists }
+		NOT = { has_character_flag = searching_for_defender_of_the_faith }
+	}
+	
+	mean_time_to_happen = {
+		days = 1
+	}
+
+	# Here we do a pre-selection of possible candidates filtering on real
+	# size or alliances the invalid candidates, the selected one receive
+	# an event in which they could try to convince the Pope that they the
+	# best candidate (read bribe him) or to renounce to the honour.
+	immediate = {
+		#Count candidates
+		set_variable = { which = "defender_of_the_faith_candidates" value = 0 }
+		clr_character_flag = defender_of_the_faith_candidate
+		set_character_flag = searching_for_defender_of_the_faith
+
+		any_independent_ruler = {
+			limit = {
+				religion = catholic
+				#
+				# A Realm size of >= 100 scopes States as Holy Roman Empire, France or England
+				realm_size = 100
+				OR = {
+					tier = king
+					tier = emperor
+				}
+
+				# He should not be excommunicated!
+				NOT = { trait = excommunicated }
+
+				# He should not be at war with the Pope, obviously!	
+				NOT = { war_with = ROOT }
+
+				# It should not be the Usurper of the Papal States!
+				#NOT = { has_landed_title = c_roma }
+				NOT = {
+					has_landed_title = d_commune_of_rome
+					has_landed_title = k_roman_republic
+				 	has_landed_title = e_wre
+				}
+
+				# Neither his liege (HRE) that is defending them
+				NOT = {
+					any_vassal = {
+						OR = {
+							has_landed_title = d_commune_of_rome
+							has_landed_title = k_roman_republic
+						}
+					}
+				}
+
+
+				# TODO or an ally!
+				#opinion = { who = FROM value = 75 }
+			}
+
+			character_event = { id = COR.7 }
+		}
+	}
+
+        option = {
+		name = EVTOPTOK_COR_6
+		set_character_flag = searching_for_defender_of_the_faith 
+	}
+}
+
+# This character is a candidate to be a defender of the faith
+character_event = {
+	id = COR.7
+	title = COR.7.title
+    	desc = COR.7.desc
+   	picture = GFX_evt_emissary
+
+	is_triggered_only = yes
+
+	# The Pope has selected you as a possible candidate to be "The Defender of the Faith" 
+	# what do you want to do?
+
+	# Try to bribe him to get better chances 
+	option = {
+		name = EVTOPTA_COR_7
+		
+		trigger = { wealth = 500 }
+
+		ai_chance = {
+			factor = 50
+			
+			# A greedy character prefers to not use his money for this 
+			modifier = {
+				factor = 0
+				trait = greedy	
+			}
+
+			# A brave character wants always now fights
+			modifier = {
+				factor = 1.25
+				trait = brave
+			}
+
+			# A zelous character wants to serve the Church
+			modifier = {
+				factor = 2.0
+				trait = zealous
+			}
+		}
+
+		wealth = -500
+		set_character_flag = defender_of_the_faith_candidate
+		set_character_flag = defender_of_the_faith_briber
+		# TODO add to the Pope an opinion modifier as we give moneys
+                # to him!
+		change_variable = { which = "defender_of_the_faith_candidates" value = 1 }	
+		#add_trait = defender_of_the_faith
+		#set_global_flag = defender_of_the_faith_exists
+
+		#opinion = {
+		#	who = FROM
+		#	modifier = opinion_defender_of_the_faith
+		#}
+	}
+
+	# Pray God that the Pope chooches you (do nothing)
+	option = {
+		name = EVTOPTB_COR_7
+
+		ai_chance = {
+			factor = 50
+
+			# An humble character does not try to bribe the Pope!
+			modifier = {
+				factor = 1.25 
+				trait = humble	
+			}
+
+			# A content character waits doing nothing (and will be defeated)
+			modifier = {
+				factor = 1.25 
+				trait = humble	
+			}
+		}
+
+		set_character_flag = defender_of_the_faith_candidate
+		change_variable = { which = "defender_of_the_faith_candidates" value = 1 }
+	}
+
+	# Renounce to be a candidate
+	option = {
+		name = EVTOPTC_COR_7
+		
+		trigger = { trait = cynical }
+
+		ai_chance = {
+			# Less weight to this case, if the character doesn't like the Pope he could try to run in any case...
+			factor = 40
+
+			# A cynical character is not interested to be "The Defender of the faith"!
+			modifier = {
+				factor = 3.0
+				trait = cynical
+			}
+
+			# A character with a low opinion of the Pope could decide to renounce to the candidacy
+			modifier = {
+				factor = 1.25 
+				NOT = {
+					opinion = { who = FROM value = 0 }
+				}
+			}
+		}
+		set_character_flag = debug_refused_defender_of_the_faith
+		prestige = -500
+	}
+}
+
+# After some time the Pope decide who will be "The Defender of the Faith"
+character_event = {
+	id = COR.8
+	title = COR.8.title
+    	desc = COR.8.desc
+   	picture = GFX_evt_emissary
+
+	#is_triggered_only = yes
+
+	trigger = {
+		has_dlc = "Legacy of Rome"
+		#has_landed_title = k_papal_state
+		has_character_flag = searching_for_defender_of_the_faith 
+		NOT = { has_global_flag = defender_of_the_faith_exists }
+	}
+
+	mean_time_to_happen = {
+		days = 5
+	}
+
+	immediate = {
+			random_independent_ruler  = {
+				limit = {
+					has_character_flag = defender_of_the_faith_candidate 
+				}
+				
+				set_character_flag = candidate_1
+			}
+
+			random_independent_ruler  = {
+				limit = {
+					has_character_flag = defender_of_the_faith_candidate 
+					NOT = { has_character_flag = candidate_1 }
+				}
+				
+				set_character_flag = candidate_2
+			}
+
+			random_independent_ruler  = {
+				limit = {
+					has_character_flag = defender_of_the_faith_candidate 
+					NOT = { has_character_flag = candidate_1 }
+					NOT = { has_character_flag = candidate_2 }
+				}
+				
+				set_character_flag = candidate_3
+			}
+	}
+
+	# The Pope checks the candidates to select "The Defender of the Faith"
+	option = {
+		trigger = {
+			FROM = { any_independent_ruler  = { has_character_flag = candidate_1 } } 
+		}
+
+		name = EVTOPTA_COR_8
+
+		ai_chance = {
+			factor = 50
+
+			# You are not faster, "The Defender of the Faith" already exits (how???)
+			modifier = {
+				factor = 0
+				has_global_flag = defender_of_the_faith_exists
+			}
+		
+			# You are excommunicated, no you cannot be "The Defender of the Faith"
+			modifier = {
+				factor = 0
+				FROM = { any_independent_ruler  = { has_character_flag = candidate_1 } trait = excommunicated }
+			}
+	
+			# The Pope does not love you so much, you cannot be "The Defender of the Faith"
+			modifier = {
+				factor = 0
+				FROM = { 
+					any_independent_ruler  = { has_character_flag = candidate_1 } 
+					NOT = { opinion = { who = THIS value = 0 } } 
+				}
+			}
+
+			# You have too low piety, you cannot be "The Defender of the Faith"
+			modifier = {
+				factor = 0
+				FROM = { 
+					any_independent_ruler  = { has_character_flag = candidate_1 } 
+					NOT = { piety = 100 } 
+				}
+			}
+
+			# You have... bribed me! You are an excellent candidate to be "The Defender of the Faith"
+			modifier = {
+				factor = 3.00
+				any_independent_ruler  = { has_character_flag = candidate_1 has_character_flag = defender_of_the_faith_briber }
+			}
+
+			# You are a Crusader! You are a good candidate to be "The Defender of the Faith" 
+			modifier = {
+				factor = 2.00
+				any_independent_ruler  = { has_character_flag = candidate_1 trait = crusader }
+			}
+
+			# You are charitable! You are a good candidate to be "The Defender of the Faith" 
+			modifier = {
+				factor = 1.25
+				any_independent_ruler  = { has_character_flag = candidate_1 trait = charitable }
+			}
+
+			modifier = {
+				factor = 1.25
+				any_independent_ruler  = { has_character_flag = candidate_1 trait = ambitious }
+			}
+
+			# You are brave! You are a good candidate to be "The Defender of the Faith"
+			modifier = {
+				factor = 1.50
+				any_independent_ruler  = { has_character_flag = candidate_1 trait = brave }
+			}
+
+			# You are zelous! You are a good candidate to be "The Defender of the Faith"
+			modifier = {
+				factor = 1.75
+				any_independent_ruler  = { has_character_flag = candidate_1 trait = zealous }
+			}
+
+			# Typically the Holy Roman Emperor should be chosen
+			modifier = {
+				factor = 3.00
+				tier = emperor
+			}
+
+			# You are cynical not a good thing for "The Defender of the Faith"
+			modifier = {
+				factor = 0.33
+				any_independent_ruler  = { has_character_flag = candidate_1 trait = cynical }
+			}
+		}
+
+		clr_character_flag = searching_for_defender_of_the_faith
+		random_independent_ruler  = {
+			limit = { has_character_flag = candidate_1 }
+			character_event = { id = COR.9 }
+		}
+	}
+
+	option = {
+		trigger = {
+			FROM = { any_independent_ruler  = { has_character_flag = candidate_2 } } 
+		}
+
+		name = EVTOPTB_COR_8
+
+		ai_chance = {
+			factor = 50
+
+			# You are not faster, "The Defender of the Faith" already exits (how???)
+			modifier = {
+				factor = 0
+				has_global_flag = defender_of_the_faith_exists
+			}
+		
+			# You are excommunicated, no you cannot be "The Defender of the Faith"
+			modifier = {
+				factor = 0
+				FROM = { any_independent_ruler  = { has_character_flag = candidate_2 } trait = excommunicated } }
+	
+			# The Pope does not love you so much, you cannot be "The Defender of the Faith"
+			modifier = {
+				factor = 0
+				FROM = { 
+					any_independent_ruler  = { has_character_flag = candidate_2 } 
+					NOT = { opinion = { who = THIS value = 0 } } 
+				}
+			}
+
+			# You have too low piety, you cannot be "The Defender of the Faith"
+			modifier = {
+				factor = 0
+				FROM = { 
+					any_independent_ruler  = { has_character_flag = candidate_2 } 
+					NOT = { piety = 100 } 
+				}
+			}
+
+			# You have... bribed me! You are an excellent candidate to be "The Defender of the Faith"
+			modifier = {
+				factor = 3.00
+				any_independent_ruler  = { has_character_flag = candidate_2 has_character_flag = defender_of_the_faith_briber }
+			}
+
+			# You are a Crusader! You are a good candidate to be "The Defender of the Faith" 
+			modifier = {
+				factor = 2.00
+				any_independent_ruler  = { has_character_flag = candidate_2 trait = crusader }
+			}
+
+			# You are charitable! You are a good candidate to be "The Defender of the Faith" 
+			modifier = {
+				factor = 1.25
+				any_independent_ruler  = { has_character_flag = candidate_2 trait = charitable }
+			}
+
+			modifier = {
+				factor = 1.25
+				any_independent_ruler  = { has_character_flag = candidate_2 trait = ambitious }
+			}
+
+			# You are brave! You are a good candidate to be "The Defender of the Faith"
+			modifier = {
+				factor = 1.50
+				any_independent_ruler  = { has_character_flag = candidate_2 trait = brave }
+			}
+
+			# You are zelous! You are a good candidate to be "The Defender of the Faith"
+			modifier = {
+				factor = 1.75
+				any_independent_ruler  = { has_character_flag = candidate_2 trait = zealous }
+			}
+
+			# You are cynical not a good thing for "The Defender of the Faith"
+			modifier = {
+				factor = 0.33
+				any_independent_ruler  = { has_character_flag = candidate_2 trait = cynical }
+			}
+		}
+
+		clr_character_flag = searching_for_defender_of_the_faith
+		random_independent_ruler  = {
+			limit = { has_character_flag = candidate_2 }
+			character_event = { id = COR.9 }
+		}
+	}
+
+	option = {
+		trigger = {
+			FROM = { any_independent_ruler  = { has_character_flag = candidate_3 } } 
+		}
+
+		name = EVTOPTC_COR_8
+
+		ai_chance = {
+			factor = 50
+
+			# You are not faster, "The Defender of the Faith" already exits (how???)
+			modifier = {
+				factor = 0
+				has_global_flag = defender_of_the_faith_exists
+			}
+		
+			# You are excommunicated, no you cannot be "The Defender of the Faith"
+			modifier = {
+				factor = 0
+				FROM = { any_independent_ruler  = { has_character_flag = candidate_3 } trait = excommunicated } }
+	
+			# The Pope does not love you so much, you cannot be "The Defender of the Faith"
+			modifier = {
+				factor = 0
+				FROM = { 
+					any_independent_ruler  = { has_character_flag = candidate_3 } 
+					NOT = { opinion = { who = THIS value = 0 } } 
+				}
+			}
+
+			# You have too low piety, you cannot be "The Defender of the Faith"
+			modifier = {
+				factor = 0
+				FROM = { 
+					any_independent_ruler  = { has_character_flag = candidate_3 } 
+					NOT = { piety = 100 } 
+				}
+			}
+
+			# You have... bribed me! You are an excellent candidate to be "The Defender of the Faith"
+			modifier = {
+				factor = 3.00
+				any_independent_ruler  = { has_character_flag = candidate_3 has_character_flag = defender_of_the_faith_briber }
+			}
+
+			# You are a Crusader! You are a good candidate to be "The Defender of the Faith" 
+			modifier = {
+				factor = 2.00
+				any_independent_ruler  = { has_character_flag = candidate_3 trait = crusader }
+			}
+
+			# You are charitable! You are a good candidate to be "The Defender of the Faith" 
+			modifier = {
+				factor = 1.25
+				any_independent_ruler  = { has_character_flag = candidate_3 trait = charitable }
+			}
+
+			modifier = {
+				factor = 1.25
+				any_independent_ruler  = { has_character_flag = candidate_3 trait = ambitious }
+			}
+
+			# You are brave! You are a good candidate to be "The Defender of the Faith"
+			modifier = {
+				factor = 1.50
+				any_independent_ruler  = { has_character_flag = candidate_3 trait = brave }
+			}
+
+			# You are zelous! You are a good candidate to be "The Defender of the Faith"
+			modifier = {
+				factor = 1.75
+				any_independent_ruler  = { has_character_flag = candidate_3 trait = zealous }
+			}
+
+			# You are cynical not a good thing for "The Defender of the Faith"
+			modifier = {
+				factor = 0.33
+				any_independent_ruler  = { has_character_flag = candidate_3 trait = cynical }
+			}
+		}
+
+		clr_character_flag = searching_for_defender_of_the_faith
+		random_independent_ruler  = {
+			limit = { has_character_flag = candidate_3 }
+			character_event = { id = COR.9 }
+		}
+	}
+}
+
+# Finally  "The Defender of the Faith" is found, Excellent!
+character_event = {
+	id = COR.9
+	title = COR.9.title
+    	desc = COR.9.desc
+   	picture = GFX_evt_emissary
+
+	is_triggered_only = yes
+
+	option = {
+		name = EVTOPTA_COR_9
+		
+		add_trait = defender_of_the_faith
+		set_global_flag = defender_of_the_faith_exists
+		give_minor_title = title_defender_of_the_faith
+
+		opinion = {
+			who = FROM
+			modifier = opinion_defender_of_the_faith
+		}
+	}
+}

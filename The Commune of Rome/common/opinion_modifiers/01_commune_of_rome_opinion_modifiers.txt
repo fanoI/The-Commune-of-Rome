@@ -1,0 +1,12 @@
+############
+# Opinion Modifier for "The Defender of the Faith"
+############
+
+opinion_defender_of_the_faith = {
+	opinion = 100
+	months = 120
+}
+
+opinion_not_defender_of_the_faith = {
+	opinion = -50
+}

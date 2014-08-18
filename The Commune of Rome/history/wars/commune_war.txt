@@ -1,0 +1,21 @@
+name = "War of the Commune of Rome"
+
+casus_belli={
+	actor=71800
+	recipient=1000284000
+	casus_belli=claim
+	landed_title=c_roma
+	date=1143.1.5
+}
+
+1143.1.5 = {
+    add_attacker = 71800 
+	add_defender = 1000284000
+	add_defender = 7903
+}
+
+1152.1.1 = {
+	rem_attacker = 71800
+	rem_defender = 1000284000
+	rem_defender = 7903
+}

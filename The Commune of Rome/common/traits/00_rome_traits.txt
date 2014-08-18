@@ -1,0 +1,46 @@
+gladiator = {
+	martial = 5
+	diplomacy = -1
+	intrigue = -1
+	stewardship = -1
+	learning = -1
+	monthly_character_prestige = 1
+	monthly_character_wealth = 5
+	
+	customizer = no
+	
+	cannot_marry = yes
+	cannot_inherit = yes
+}
+
+ex-gladiator = {
+	martial = 3
+	monthly_character_prestige = 0.5
+	
+	customizer = no
+}
+
+augustus = {
+	customizer = no
+	
+	vassal_opinion = 15
+	monthly_character_prestige = 1.5
+	martial = 1
+	stewardship = 1
+	learning = 1
+	intrigue = 1
+	diplomacy = 1
+}
+
+defender_of_the_faith = {
+	#potential = {
+	#	religion_group = christian
+	#}
+
+	monthly_character_piety = 1
+
+	church_opinion = 25
+	same_opinion_if_same_religion = 30
+	
+	ai_zeal = 10
+}

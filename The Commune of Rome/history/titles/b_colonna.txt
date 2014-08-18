@@ -1,0 +1,5 @@
+1143.1.1 = {
+	holding_dynasty = 1042105 # Colonna - makes this a FAMILY_PALACE type Holding
+	liege="d_commune_of_rome"
+	holder = 1000284004 # Giovanni, later Cardinal
+}

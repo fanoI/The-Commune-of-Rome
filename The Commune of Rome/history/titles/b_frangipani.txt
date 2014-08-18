@@ -1,0 +1,5 @@
+1143.1.1 = {
+	holding_dynasty = 1042106 #Frangipani - makes this a FAMILY_PALACE type Holding
+	liege="d_commune_of_rome"
+	holder = 1000284006 # Oddone, Prefect of Rome, Chronicler?
+}
